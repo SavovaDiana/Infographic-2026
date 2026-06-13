@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Пътешественици - Колело на късмета</title>
+    <style>
+        :root {
+            --primary-orange: #FF6B35;
+            --dark-orange: #E84A1A;
+            --wheel-black: #1A1A1A;
+            --wheel-green: #1B4D3E;
+            --bg-light: #FDFBF7;
+            --text-dark: #2B323C;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #FFF5EE 0%, #FFE4D6 100%);
+            color: var(--text-dark);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Свеж тематичен фон */
+        .travel-bg {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            opacity: 0.08;
+            pointer-events: none;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 100 100"><text y="30" font-size="25">✈️</text><text x="60" y="70" font-size="25">🌍</text><text x="10" y="80" font-size="22">🧳</text><text x="70" y="20" font-size="22">🗺️</text></svg>');
+        }
+
+        /* Контейнер за заглавието и логото */
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 25px;
+            margin-bottom: 30px;
+            z-index: 10;
+        }
+
+        .logo-container img {
+            width: 110px;
+            height: 110px;
+            object-fit: contain;
+            border-radius: 50%;
+            background: #FFF;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border: 3px solid #FFF;
+        }
+
+        .header-text {
+            text-align: left;
+        }
+
+        h1 {
+            color: var(--dark-orange);
+            font-size: 2.8rem;
+            margin: 0 0 3px 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        h3 {
+            font-size: 1.3rem;
+            margin: 0 0 5px 0;
+            color: var(--text-dark);
+            font-weight: 600;
+            max-width: 800px;
+            line-height: 1.3;
+        }
+
+        p.subtitle {
+            font-size: 1.1rem;
+            color: #5A6573;
+            margin: 0;
+            font-weight: 500;
+        }
+
+        .main-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 80px;
+            z-index: 10;
+            height: 520px;
+        }
+
+        /* Секция с колелото */
+        .wheel-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 480px;
+        }
+
+        .wheel-container {
+            position: relative;
+            width: 450px;
+            height: 450px;
+            transition: all 0.5s ease;
+        }
+
+        .wheel-container.hidden {
+            opacity: 0;
+            transform: scale(0.5);
+            pointer-events: none;
+            height: 0;
+            width: 0;
+        }
+
+        .arrow {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 20px solid transparent;
+            border-right: 20px solid transparent;
+            border-top: 35px solid var(--dark-orange);
+            z-index: 20;
+            filter: drop-shadow(0px 3px 3px rgba(0,0,0,0.2));
+        }
+
+        canvas {
+            border-radius: 50%;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15), 0 0 0 12px rgba(255, 107, 53, 0.15);
+            transition: transform 4s cubic-bezier(0.1, 0.8, 0.1, 1);
+        }
+
+        .wheel-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 45px;
+            height: 45px;
+            background: #FFF;
+            border-radius: 50%;
+            border: 4px solid var(--primary-orange);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 15;
+        }
+
+        .spin-btn {
+            margin-top: 25px;
+            padding: 18px 45px;
+            font-size: 1.6rem;
+            font-weight: bold;
+            color: #FFF;
+            background: linear-gradient(135deg, var(--primary-orange) 0%, var(--dark-orange) 100%);
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 6px 20px rgba(255, 107, 53, 0.35);
+            transition: all 0.3s ease;
+            z-index: 10;
+            text-transform: uppercase;
+        }
+
+        .spin-btn:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(255, 107, 53, 0.5);
+        }
+
+        .spin-btn:active:not(:disabled) {
+            transform: translateY(1px);
+        }
+
+        .spin-btn:disabled {
+            background: #D1D8E0;
+            color: #95A5A6;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        /* Панел с резултатите */
+        .results-panel {
+            background: rgba(255, 255, 255, 0.85);
+            border: 2px solid rgba(255, 107, 53, 0.25);
+            border-radius: 24px;
+            padding: 35px;
+            width: 340px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        }
+
+        .results-panel h2 {
+            margin-top: 0;
+            color: var(--text-dark);
+            font-size: 1.6rem;
+            border-bottom: 2px solid rgba(255, 107, 53, 0.15);
+            padding-bottom: 12px;
+            text-align: center;
+        }
+
+        .winner-slot {
+            margin: 20px 0;
+            padding: 15px 20px;
+            background: #FFF;
+            border-left: 6px solid #D1D8E0;
+            border-radius: 8px;
+            font-size: 1.3rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+            transition: all 0.4s ease;
+        }
+
+        .winner-slot.active {
+            border-left-color: var(--primary-orange);
+            background: rgba(255, 107, 53, 0.05);
+            transform: scale(1.02);
+        }
+
+        .winner-name {
+            font-weight: bold;
+            color: var(--text-dark);
+        }
+
+        /* Поп-ъп прозорец */
+        .overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(43, 50, 60, 0.6);
+            backdrop-filter: blur(8px);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+        }
+
+        .overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .popup {
+            background: #FFF;
+            border-radius: 30px;
+            padding: 50px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+            transform: scale(0.75);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            max-width: 550px;
+            width: 90%;
+            border-top: 10px solid var(--primary-orange);
+        }
+
+        .overlay.show .popup {
+            transform: scale(1);
+        }
+
+        .popup h3 {
+            color: #7F8C8D;
+            font-size: 1.6rem;
+            margin-top: 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .popup .name {
+            font-size: 4.2rem;
+            font-weight: 900;
+            margin: 15px 0;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.05);
+        }
+
+        .popup .name.color-ния { color: var(--primary-orange); }
+        .popup .name.color-боряна { color: var(--wheel-black); }
+        .popup .name.color-любомир { color: var(--wheel-green); }
+
+        .popup .travel-text {
+            font-size: 1.4rem;
+            color: #4A5568;
+            line-height: 1.5;
+            margin-bottom: 35px;
+            font-style: italic;
+            padding: 0 10px;
+        }
+
+        .popup-btn {
+            padding: 14px 40px;
+            background: var(--text-dark);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+        .popup-btn:hover {
+            background: #000;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="travel-bg"></div>
+
+    <header>
+        <div class="logo-container">
+            <img src="logo51.jpg" alt="Лого 51 СУ">
+        </div>
+        
+        <div class="header-text">
+            <h1>От и към България: истории в числа</h1>
+            <h3>Пътувания на български граждани в чужбина и посещения на чужди граждани в България</h3>
+            <p class="subtitle">Интерактивен избор на пътешественици</p>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <div class="wheel-area">
+            <div class="wheel-container" id="wheelContainer">
+                <div class="arrow"></div>
+                <div class="wheel-center"></div>
+                <canvas id="wheel" width="450" height="450"></canvas>
+            </div>
+            <button class="spin-btn" id="spinBtn" onclick="handleButtonClick()">Завърти колелото</button>
+        </div>
+
+        <div class="results-panel">
+            <h2>Ред на изтегляне</h2>
+            <div class="winner-slot" id="slot1">
+                <span>1. Първо име:</span>
+                <span class="winner-name" id="name1">-</span>
+            </div>
+            <div class="winner-slot" id="slot2">
+                <span>2. Второ име:</span>
+                <span class="winner-name" id="name2">-</span>
+            </div>
+            <div class="winner-slot" id="slot3">
+                <span>3. Трето име:</span>
+                <span class="winner-name" id="name3">-</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="overlay" id="overlay">
+        <div class="popup" id="popupBox">
+            <h3 id="popupTitle">Избрано е име!</h3>
+            <div class="name" id="popupName">Име</div>
+            <div class="travel-text" id="popupText">Пожелание...</div>
+            <button class="popup-btn" onclick="closePopup()">Продължи</button>
+        </div>
+    </div>
+
+    <script>
+        let participants = [
+            { name: "Ния", color: "#FF6B35", text: "Ния, улавяй всеки миг по света! Нека следващото ти пътуване донесе незабравими емоции, красиви кадри и нови приятелства! ✈️📸" },
+            { name: "Боряна", color: "#1A1A1A", text: "Боряна, пред теб се разкриват нови хоризонти! Пожелаваме ти екзотични дестинации, които да вдъхновят сърцето ти и да разширят света ти! 🌍🗺️" },
+            { name: "Любомир", color: "#1B4D3E", text: "Любомир, продължавай към нови вълнуващи открития! Нека всяко посещение в чужбина те обогатява, а всяко завръщане в България ти носи гордост! 🧳🇧🇬" }
+        ];
+        
+        let currentOrder = 1;
+        const canvas = document.getElementById("wheel");
+        const ctx = canvas.getContext("2d");
+        let isSpinning = false;
+        let startAngle = 0;
+
+        function drawWheel() {
+            const numSectors = participants.length;
+            if (numSectors === 0) return;
+
+            const arcSize = (2 * Math.PI) / numSectors;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            for (let i = 0; i < numSectors; i++) {
+                const angle = startAngle + i * arcSize;
+                
+                ctx.beginPath();
+                ctx.fillStyle = participants[i].color;
+                ctx.moveTo(canvas.width / 2, canvas.height / 2);
+                ctx.arc(canvas.width / 2, canvas.height / 2, canvas.width / 2 - 5, angle, angle + arcSize);
+                ctx.lineTo(canvas.width / 2, canvas.height / 2);
+                ctx.fill();
+                ctx.strokeStyle = "rgba(255,255,255,0.2)";
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                ctx.save();
+                ctx.translate(canvas.width / 2, canvas.height / 2);
+                ctx.rotate(angle + arcSize / 2);
+                ctx.textAlign = "right";
+                ctx.fillStyle = "#FFFFFF";
+                ctx.font = "bold 26px 'Segoe UI'";
+                ctx.fillText(participants[i].name, canvas.width / 2 - 40, 10);
+                ctx.restore();
+            }
+        }
+
+        function handleButtonClick() {
+            if (isSpinning) return;
+
+            if (currentOrder === 3) {
+                showThirdNameDirectly();
+            } else {
+                spinWheel();
+            }
+        }
+
+        function spinWheel() {
+            isSpinning = true;
+            document.getElementById("spinBtn").disabled = true;
+
+            const spinAngleStart = Math.random() * 10 + 28;
+            const spinTimeTotal = 3500;
+            let spinTime = 0;
+
+            function rotate() {
+                spinTime += 30;
+                if (spinTime >= spinTimeTotal) {
+                    stopRotate();
+                    return;
+                }
+                const t = spinTime / spinTimeTotal;
+                const easeOut = 1 - Math.pow(1 - t, 3);
+                startAngle += (spinAngleStart * (1 - easeOut) * Math.PI / 180);
+                
+                drawWheel();
+                setTimeout(rotate, 30);
+            }
+            rotate();
+        }
+
+        function stopRotate() {
+            isSpinning = false;
+            const numSectors = participants.length;
+            const targetAngle = (270 - (startAngle * 180 / Math.PI) % 360 + 360) % 360;
+            const sectorIndex = Math.floor((targetAngle / 360) * numSectors);
+            
+            const chosen = participants[sectorIndex];
+            displayWinner(chosen, sectorIndex);
+        }
+
+        function showThirdNameDirectly() {
+            const chosen = participants[0];
+            displayWinner(chosen, 0);
+        }
+
+        function displayWinner(chosen, index) {
+            document.getElementById("popupTitle").innerText = `${currentOrder}-о избрано име:`;
+            
+            const nameDiv = document.getElementById("popupName");
+            nameDiv.innerText = chosen.name;
+            
+            nameDiv.className = "name color-" + chosen.name.toLowerCase();
+            document.getElementById("popupBox").style.borderTopColor = chosen.color;
+            
+            document.getElementById("popupText").innerText = chosen.text;
+            document.getElementById("overlay").classList.add("show");
+
+            document.getElementById(`name${currentOrder}`).innerText = chosen.name;
+            document.getElementById(`slot${currentOrder}`).classList.add("active");
+
+            participants.splice(index, 1);
+            currentOrder++;
+
+            drawWheel();
+        }
+
+        function closePopup() {
+            document.getElementById("overlay").classList.remove("show");
+            
+            if (currentOrder === 3) {
+                document.getElementById("wheelContainer").classList.add("hidden");
+                document.getElementById("spinBtn").innerText = "Покажи последното име";
+                document.getElementById("spinBtn").disabled = false;
+            } else if (currentOrder > 3) {
+                document.getElementById("spinBtn").innerText = "Всички са избрани! Успех!";
+                document.getElementById("spinBtn").disabled = true;
+            } else {
+                document.getElementById("spinBtn").disabled = false;
+            }
+        }
+
+        drawWheel();
+    </script>
+</body>
+</html>
